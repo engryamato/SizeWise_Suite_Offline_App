@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SizeWiseLogo from './SizeWiseLogo';
 import ProjectCreationModal from './ProjectCreationModal';
+import TaskManager from './TaskManager';
 import { useApp } from '../context/AppContext';
 
 export default function Dashboard({ onLogout }) {
@@ -8,6 +9,10 @@ export default function Dashboard({ onLogout }) {
   const [timelineView, setTimelineView] = useState('Week');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [editingProject, setEditingProject] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showTaskManager, setShowTaskManager] = useState(false);
+  const [taskManagerProjectId, setTaskManagerProjectId] = useState(null);
 
   // Panel states for KPI details
   const [activePanel, setActivePanel] = useState(null);
@@ -40,6 +45,48 @@ export default function Dashboard({ onLogout }) {
   const closePanel = () => {
     setActivePanel(null);
     setPanelData(null);
+  };
+
+  // Project management handlers
+  const handleEditProject = (project, e) => {
+    e.stopPropagation(); // Prevent project selection
+    closePanel(); // Close All Projects modal first
+    setEditingProject(project);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteProject = (project, e) => {
+    e.stopPropagation(); // Prevent project selection
+    closePanel(); // Close All Projects modal first
+    setShowDeleteConfirm(project);
+  };
+
+  const confirmDeleteProject = async () => {
+    if (showDeleteConfirm) {
+      await actions.deleteProject(showDeleteConfirm.id);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const cancelDeleteProject = () => {
+    setShowDeleteConfirm(null);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProject(null);
+  };
+
+  const handleOpenTaskManager = (project, e) => {
+    e.stopPropagation();
+    closePanel(); // Close All Projects modal first
+    setTaskManagerProjectId(project.id);
+    setShowTaskManager(true);
+  };
+
+  const handleCloseTaskManager = () => {
+    setShowTaskManager(false);
+    setTaskManagerProjectId(null);
   };
 
   // Keyboard support for panels
@@ -106,6 +153,11 @@ export default function Dashboard({ onLogout }) {
   };
 
   const projects = state.projects || [];
+
+  // Force re-render when projects change
+  useEffect(() => {
+    console.log('Dashboard: Projects updated, count:', projects.length);
+  }, [projects]);
 
   // Generate gantt data from active projects
   const ganttData = projects
@@ -238,7 +290,7 @@ export default function Dashboard({ onLogout }) {
                 <div className="stat-number">{dashboardData.overdue.count}</div>
                 <div className="stat-label">Overdue Tasks</div>
                 <div className="stat-trend">
-                  {dashboardData.overdue.count > 0 ? '🔴 Needs Attention' : '✅ On Track'}
+                  {dashboardData.overdue.count > 0 ? '🔴 Needs Attention' : '✅ All Clear'}
                 </div>
               </div>
             </div>
@@ -345,6 +397,32 @@ export default function Dashboard({ onLogout }) {
                     <span className={`project-priority priority-${project.priority}`}>
                       {project.priority === 'high' ? '🔴' : project.priority === 'medium' ? '🟡' : '🟢'} {project.priority}
                     </span>
+                    <div className="project-actions">
+                      <button
+                        className="action-btn tasks-btn"
+                        onClick={(e) => handleOpenTaskManager(project, e)}
+                        title="Manage tasks"
+                        aria-label={`Manage tasks for ${project.name}`}
+                      >
+                        📋
+                      </button>
+                      <button
+                        className="action-btn edit-btn"
+                        onClick={(e) => handleEditProject(project, e)}
+                        title="Edit project"
+                        aria-label={`Edit ${project.name}`}
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={(e) => handleDeleteProject(project, e)}
+                        title="Delete project"
+                        aria-label={`Delete ${project.name}`}
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
@@ -441,11 +519,37 @@ export default function Dashboard({ onLogout }) {
         </div>
       </section>
 
-      {/* Project Creation Modal */}
+      {/* Project Creation/Edit Modal */}
       <ProjectCreationModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
+        project={editingProject}
+        mode={editingProject ? 'edit' : 'create'}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay" onClick={cancelDeleteProject}>
+          <div className="modal-content delete-confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Delete Project</h2>
+              <button className="modal-close" onClick={cancelDeleteProject}>×</button>
+            </div>
+            <div className="modal-body">
+              <p>Are you sure you want to delete <strong>{showDeleteConfirm.name}</strong>?</p>
+              <p className="warning-text">This action cannot be undone. All associated tasks will also be deleted.</p>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelDeleteProject}>
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={confirmDeleteProject}>
+                Delete Project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* KPI Detail Panel */}
       {activePanel && panelData && (
@@ -478,6 +582,41 @@ export default function Dashboard({ onLogout }) {
                               <span className={`item-status status-${item.status}`}>
                                 {item.status.toUpperCase()}
                               </span>
+                              <div className="item-actions">
+                                <button
+                                  className="action-btn tasks-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenTaskManager(item, e);
+                                  }}
+                                  title="Manage tasks"
+                                  aria-label={`Manage tasks for ${item.name}`}
+                                >
+                                  📋
+                                </button>
+                                <button
+                                  className="action-btn edit-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditProject(item, e);
+                                  }}
+                                  title="Edit project"
+                                  aria-label={`Edit ${item.name}`}
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  className="action-btn delete-btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteProject(item, e);
+                                  }}
+                                  title="Delete project"
+                                  aria-label={`Delete ${item.name}`}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
                             <div className="item-details">
                               <span className="item-location">📍 {item.location}</span>
@@ -530,6 +669,14 @@ export default function Dashboard({ onLogout }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Task Manager */}
+      {showTaskManager && (
+        <TaskManager
+          projectId={taskManagerProjectId}
+          onClose={handleCloseTaskManager}
+        />
       )}
     </div>
   );

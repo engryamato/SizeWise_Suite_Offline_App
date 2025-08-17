@@ -20,7 +20,9 @@ html, body {
   position: absolute;
   top: 50%;
   left: 50%;
+  /* CRITICAL: This ensures center-based scaling during all transitions */
   transform: translate(-50%, -50%);
+  transform-origin: center center;
   background: rgba(255, 255, 255, 0.1);
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
@@ -31,44 +33,76 @@ html, body {
   z-index: 10;
   pointer-events: auto;
 
-  /* Smooth transitions for size changes */
-  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  /* Smooth transitions for dynamic size changes - all centered */
+  transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+              height 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+              background 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              border-color 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              padding 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              font-size 0.3s ease;
 
-  /* Button state (default) */
-  width: 200px;
-  height: 60px;
-  padding: 20px 40px;
+  /* Default state - sizes will be set dynamically */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   font-weight: 500;
+  -webkit-user-select: none;
   user-select: none;
+
+  /* Default button padding */
+  padding: 20px 40px;
+
+  /* Ensure content is always centered during transitions */
+  box-sizing: border-box;
+
+  /* Perfect text centering - one line, no wrapping */
+  text-align: center;
+  white-space: nowrap;
+  line-height: 1;
 }
 
-/* Panel state (expanded) */
+/* Panel state (expanded) - uses dynamic sizing */
 .frosted-glass-container.expanded {
-  width: 400px;
-  height: 300px;
+  /* Sizes are set dynamically via JavaScript */
+  max-width: 90vw;
+  max-height: 90vh;
   padding: 40px;
   cursor: default;
   flex-direction: column;
   justify-content: flex-start;
+
+  /* Override button-specific styles */
+  font-size: 16px; /* Smaller font for panel content */
+
+  /* Ensure perfect center-based scaling during transitions */
+  transform-origin: center center !important;
 }
 
-/* Hover effect only in button state */
+/* Force center-based scaling for all size transitions */
+.frosted-glass-container.transitioning {
+  transform-origin: center center !important;
+}
+
+/* Hover effect only in button state - maintain center scaling */
 .frosted-glass-container:not(.expanded):hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
   transform: translate(-50%, -50%) scale(1.02);
+  transform-origin: center center;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Active effect only in button state */
+/* Active effect only in button state - maintain center scaling */
 .frosted-glass-container:not(.expanded):active {
   transform: translate(-50%, -50%) scale(0.98);
+  transform-origin: center center;
 }
+
+/* Duplicate styles removed - using the improved versions above */
 
 /* Panel content styles */
 .panel-content {
@@ -140,6 +174,80 @@ html, body {
 
 .close-button:hover {
   color: white;
+}
+
+/* PIN Management Styles */
+.pin-management-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  text-decoration: underline;
+}
+
+.link-button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  text-decoration: none;
+}
+
+.link-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Message styles */
+.error-message {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #fecaca;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+
+.success-message {
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #bbf7d0;
+  font-size: 14px;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+
+/* Disabled state for inputs and buttons */
+.pin-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.login-button:disabled:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: none;
 }
 
 @keyframes fadeInUp {
@@ -652,6 +760,12 @@ html, body {
   margin-bottom: 12px;
 }
 
+.item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .item-name {
   font-size: 16px;
   font-weight: 600;
@@ -895,6 +1009,53 @@ html, body {
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
+  position: relative;
+}
+
+.project-actions {
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  margin-top: 4px;
+}
+
+.project-item:hover .project-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+.tasks-btn:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .project-priority {
@@ -1230,7 +1391,7 @@ html, body {
 .modal-header h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #111827;
+  color: #111827 !important;
   margin: 0;
 }
 
@@ -1269,7 +1430,7 @@ html, body {
   display: block;
   font-size: 14px;
   font-weight: 500;
-  color: #374151;
+  color: #374151 !important;
   margin-bottom: 6px;
 }
 
@@ -1281,8 +1442,8 @@ html, body {
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
   font-size: 14px;
-  color: #374151;
-  background: #ffffff;
+  color: #374151 !important;
+  background: #ffffff !important;
   transition: all 0.2s ease;
 }
 
@@ -1294,6 +1455,11 @@ html, body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #9ca3af !important;
+}
+
 .form-group input.error,
 .form-group textarea.error {
   border-color: #ef4444;
@@ -1303,7 +1469,7 @@ html, body {
 .error-message {
   display: block;
   font-size: 12px;
-  color: #ef4444;
+  color: #ef4444 !important;
   margin-top: 4px;
 }
 
@@ -1329,7 +1495,7 @@ html, body {
 
 .btn-primary {
   background: #3b82f6;
-  color: white;
+  color: white !important;
   border-color: #3b82f6;
 }
 
@@ -1344,9 +1510,44 @@ html, body {
   cursor: not-allowed;
 }
 
+/* Delete confirmation dialog styles */
+.delete-confirm {
+  max-width: 400px;
+}
+
+.warning-text {
+  color: #f59e0b;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
 .btn-secondary {
   background: #ffffff;
-  color: #374151;
+  color: #374151 !important;
   border-color: rgba(0, 0, 0, 0.1);
 }
 
@@ -1441,5 +1642,322 @@ html, body {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+/* Task Manager Styles */
+.task-manager-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.task-manager {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-radius: 16px;
+  width: 95vw;
+  height: 90vh;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.task-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.task-manager-header h2 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-close {
+  background: rgba(239, 68, 68, 0.2);
+  color: white;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.task-form-container {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.task-form {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.task-form h3 {
+  color: white;
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Task Manager specific form styles */
+.task-manager .form-group {
+  margin-bottom: 16px;
+}
+
+.task-manager .form-group label {
+  display: block;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.task-manager .form-group input,
+.task-manager .form-group select,
+.task-manager .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.task-manager .form-group input:focus,
+.task-manager .form-group select:focus,
+.task-manager .form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.task-manager .btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.task-manager .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.task-list {
+  flex: 1;
+  padding: 20px 24px;
+  overflow: auto;
+}
+
+.empty-state {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 60px 20px;
+}
+
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  height: 100%;
+}
+
+.task-column {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.column-header {
+  color: white;
+  margin: 0 0 16px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.task-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.task-item {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.task-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.task-priority {
+  font-size: 0.9rem;
+}
+
+.task-title {
+  color: white;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.task-description {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 8px 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.task-due-date {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin: 8px 0;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.status-select {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: white;
+}
+
+.btn-edit,
+.btn-delete {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.btn-edit:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Task Manager Responsive */
+@media (max-width: 768px) {
+  .task-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .task-manager {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
   }
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 
-export default function ProjectCreationModal({ isOpen, onClose }) {
+export default function ProjectCreationModal({ isOpen, onClose, project = null, mode = 'create' }) {
   const { actions } = useApp();
   const [formData, setFormData] = useState({
     name: '',
@@ -15,21 +15,35 @@ export default function ProjectCreationModal({ isOpen, onClose }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Reset form when modal opens/closes
+  // Reset form when modal opens/closes or populate with project data for editing
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        name: '',
-        description: '',
-        location: '',
-        startDate: '',
-        dueDate: '',
-        priority: 'medium',
-        tags: []
-      });
+      if (mode === 'edit' && project) {
+        // Populate form with existing project data
+        setFormData({
+          name: project.name || '',
+          description: project.description || '',
+          location: project.location || '',
+          startDate: project.startDate || '',
+          dueDate: project.dueDate || '',
+          priority: project.priority || 'medium',
+          tags: project.tags || []
+        });
+      } else {
+        // Reset form for create mode
+        setFormData({
+          name: '',
+          description: '',
+          location: '',
+          startDate: '',
+          dueDate: '',
+          priority: 'medium',
+          tags: []
+        });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, mode, project]);
 
   // Handle form input changes
   const handleChange = (e) => {
@@ -82,25 +96,35 @@ export default function ProjectCreationModal({ isOpen, onClose }) {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const result = await actions.createProject({
+      const projectData = {
         ...formData,
         name: formData.name.trim(),
         description: formData.description.trim() || null,
         location: formData.location.trim() || null
-      });
+      };
+
+      let result;
+      if (mode === 'edit' && project) {
+        result = await actions.updateProject(project.id, projectData);
+      } else {
+        result = await actions.createProject(projectData);
+      }
 
       if (result.success) {
-        onClose();
+        // Small delay to ensure state updates before closing modal
+        setTimeout(() => {
+          onClose();
+        }, 100);
       }
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} project:`, error);
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +148,7 @@ export default function ProjectCreationModal({ isOpen, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Create New Project</h2>
+          <h2>{mode === 'edit' ? 'Edit Project' : 'Create New Project'}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
@@ -224,12 +248,15 @@ export default function ProjectCreationModal({ isOpen, onClose }) {
             <button type="button" className="btn-secondary" onClick={onClose}>
               Cancel
             </button>
-            <button 
-              type="submit" 
-              className="btn-primary" 
+            <button
+              type="submit"
+              className="btn-primary"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Creating...' : 'Create Project'}
+              {isSubmitting
+                ? (mode === 'edit' ? 'Updating...' : 'Creating...')
+                : (mode === 'edit' ? 'Update Project' : 'Create Project')
+              }
             </button>
           </div>
         </form>

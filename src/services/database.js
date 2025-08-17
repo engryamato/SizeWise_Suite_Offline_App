@@ -36,6 +36,18 @@ class DatabaseService {
   }
 
   /**
+   * Reset database to clean state (for development/testing)
+   */
+  reset() {
+    localStorage.removeItem(STORAGE_KEYS.USERS)
+    localStorage.removeItem(STORAGE_KEYS.PROJECTS)
+    localStorage.removeItem(STORAGE_KEYS.TASKS)
+    localStorage.removeItem(STORAGE_KEYS.SESSIONS)
+    this.initialized = false
+    this.init()
+  }
+
+  /**
    * Seed database with initial data
    */
   seedInitialData() {
@@ -52,107 +64,11 @@ class DatabaseService {
       }
     ]
 
-    const projects = [
-      {
-        id: 1,
-        name: 'Project Alpha',
-        description: 'Strategic development initiative for Q1',
-        ownerId: 1,
-        location: 'New York, NY',
-        startDate: '2024-01-15',
-        dueDate: '2024-06-30',
-        priority: 'high',
-        status: PROJECT_STATUS.ACTIVE,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        name: 'Project Beta',
-        description: 'Customer experience enhancement program',
-        ownerId: 1,
-        location: 'San Francisco, CA',
-        startDate: '2024-02-01',
-        dueDate: '2024-05-15',
-        priority: 'medium',
-        status: PROJECT_STATUS.ACTIVE,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        name: 'Project Gamma',
-        description: 'Infrastructure modernization project',
-        ownerId: 1,
-        location: 'Austin, TX',
-        startDate: '2024-03-01',
-        dueDate: '2024-08-30',
-        priority: 'high',
-        status: PROJECT_STATUS.ACTIVE,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 4,
-        name: 'Project Delta',
-        description: 'Market research and analysis',
-        ownerId: 1,
-        location: 'Chicago, IL',
-        startDate: '2023-12-01',
-        dueDate: '2024-02-28',
-        priority: 'low',
-        status: PROJECT_STATUS.COMPLETED,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ]
+    // Start with empty projects - no fake seeded data
+    const projects = []
 
-    const tasks = [
-      {
-        id: 1,
-        projectId: 1,
-        title: 'Requirements gathering',
-        description: 'Collect and document project requirements',
-        assigneeId: 1,
-        status: TASK_STATUS.COMPLETED,
-        priority: 'high',
-        dueDate: '2024-01-30',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 2,
-        projectId: 1,
-        title: 'Design mockups',
-        description: 'Create initial design concepts',
-        assigneeId: 1,
-        status: TASK_STATUS.IN_PROGRESS,
-        priority: 'medium',
-        dueDate: '2024-02-15',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 3,
-        projectId: 2,
-        title: 'User research',
-        description: 'Conduct user interviews and surveys',
-        assigneeId: 1,
-        status: TASK_STATUS.PENDING,
-        priority: 'high',
-        dueDate: '2024-01-20',
-        createdAt: new Date().toISOString()
-      },
-      {
-        id: 4,
-        projectId: 3,
-        title: 'Infrastructure audit',
-        description: 'Review current infrastructure',
-        assigneeId: 1,
-        status: TASK_STATUS.PENDING,
-        priority: 'high',
-        dueDate: '2024-01-25',
-        createdAt: new Date().toISOString()
-      }
-    ]
+    // Start with empty tasks - no fake seeded data
+    const tasks = []
 
     this.setItem(STORAGE_KEYS.USERS, users)
     this.setItem(STORAGE_KEYS.PROJECTS, projects)
@@ -200,11 +116,23 @@ class DatabaseService {
    */
   async getAllProjects() {
     try {
-      const projects = this.getItem(STORAGE_KEYS.PROJECTS)
-      const users = this.getItem(STORAGE_KEYS.USERS)
-      
+      const projects = this.getItem(STORAGE_KEYS.PROJECTS) || []
+      const users = this.getItem(STORAGE_KEYS.USERS) || []
+
+      if (!Array.isArray(projects)) {
+        return []
+      }
+
       return projects.map(project => {
-        const owner = users.find(user => user.id === project.ownerId)
+        if (!project) {
+          return {
+            id: 'unknown',
+            name: 'Invalid Project',
+            ownerName: 'Unknown User'
+          }
+        }
+
+        const owner = users.find(user => user && user.id === project.ownerId)
         return {
           ...project,
           ownerName: owner ? owner.fullName : 'Unknown User'
@@ -212,7 +140,7 @@ class DatabaseService {
       })
     } catch (error) {
       console.error('Error getting projects:', error)
-      throw new Error('Failed to retrieve projects')
+      return [] // Return empty array instead of throwing
     }
   }
 
@@ -220,7 +148,7 @@ class DatabaseService {
     try {
       const projects = this.getItem(STORAGE_KEYS.PROJECTS)
       const users = this.getItem(STORAGE_KEYS.USERS)
-      
+
       const newId = Math.max(...projects.map(p => p.id), 0) + 1
       const newProject = {
         ...projectData,
@@ -228,10 +156,10 @@ class DatabaseService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-      
+
       projects.push(newProject)
       this.setItem(STORAGE_KEYS.PROJECTS, projects)
-      
+
       const owner = users.find(user => user.id === projectData.ownerId)
       return {
         ...newProject,
@@ -243,57 +171,257 @@ class DatabaseService {
     }
   }
 
+  async updateProject(projectId, updateData) {
+    try {
+      const projects = this.getItem(STORAGE_KEYS.PROJECTS)
+      const users = this.getItem(STORAGE_KEYS.USERS)
+      const projectIndex = projects.findIndex(p => p.id === projectId)
+
+      if (projectIndex === -1) {
+        throw new Error('Project not found')
+      }
+
+      const updatedProject = {
+        ...projects[projectIndex],
+        ...updateData,
+        updatedAt: new Date().toISOString()
+      }
+
+      projects[projectIndex] = updatedProject
+      this.setItem(STORAGE_KEYS.PROJECTS, projects)
+
+      const owner = users.find(user => user.id === updatedProject.ownerId)
+      return {
+        ...updatedProject,
+        ownerName: owner ? owner.fullName : 'Unknown User'
+      }
+    } catch (error) {
+      console.error('Error updating project:', error)
+      throw new Error('Failed to update project')
+    }
+  }
+
+  async deleteProject(projectId) {
+    try {
+      const projects = this.getItem(STORAGE_KEYS.PROJECTS)
+      const projectIndex = projects.findIndex(p => p.id === projectId)
+
+      if (projectIndex === -1) {
+        throw new Error('Project not found')
+      }
+
+      const deletedProject = projects[projectIndex]
+      projects.splice(projectIndex, 1)
+      this.setItem(STORAGE_KEYS.PROJECTS, projects)
+
+      // Also delete associated tasks
+      const tasks = this.getItem(STORAGE_KEYS.TASKS)
+      const updatedTasks = tasks.filter(t => t.projectId !== projectId)
+      this.setItem(STORAGE_KEYS.TASKS, updatedTasks)
+
+      return deletedProject
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      throw new Error('Failed to delete project')
+    }
+  }
+
   /**
    * Task operations
    */
   async getTasksDueThisWeek() {
     try {
-      const tasks = this.getItem(STORAGE_KEYS.TASKS)
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      if (!Array.isArray(tasks) || tasks.length === 0) {
+        return 0
+      }
+
       const { startOfWeek, endOfWeek } = getCurrentWeekRange()
-      
+
       const tasksThisWeek = tasks.filter(task => {
-        if (task.status === TASK_STATUS.COMPLETED || !task.dueDate) return false
-        const dueDate = new Date(task.dueDate)
-        return dueDate >= startOfWeek && dueDate <= endOfWeek
+        if (!task || task.status === TASK_STATUS.COMPLETED || !task.dueDate) return false
+        try {
+          const dueDate = new Date(task.dueDate)
+          return dueDate >= startOfWeek && dueDate <= endOfWeek
+        } catch (dateError) {
+          console.warn('Invalid date in task:', task.dueDate)
+          return false
+        }
       })
-      
+
       return tasksThisWeek.length
     } catch (error) {
       console.error('Error getting tasks due this week:', error)
-      throw new Error('Failed to retrieve weekly tasks')
+      return 0 // Return 0 instead of throwing
     }
   }
 
   async getOverdueTasks() {
     try {
-      const tasks = this.getItem(STORAGE_KEYS.TASKS)
-      const projects = this.getItem(STORAGE_KEYS.PROJECTS)
-      
-      const overdueTasks = tasks.filter(task => {
-        return task.status !== TASK_STATUS.COMPLETED && 
-               task.dueDate && 
-               isOverdue(task.dueDate)
-      })
-      
-      const top3 = overdueTasks.slice(0, 3).map(task => {
-        const project = projects.find(p => p.id === task.projectId)
-        const daysLate = daysBetween(new Date(), task.dueDate)
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      const projects = this.getItem(STORAGE_KEYS.PROJECTS) || []
+
+      if (!Array.isArray(tasks) || tasks.length === 0) {
         return {
-          id: task.id,
-          name: task.title,
-          projectId: task.projectId,
-          projectName: project ? project.name : 'Unknown Project',
-          daysLate
+          count: 0,
+          top3: []
+        }
+      }
+
+      const overdueTasks = tasks.filter(task => {
+        if (!task || !task.dueDate) return false
+        try {
+          return task.status !== TASK_STATUS.COMPLETED && isOverdue(task.dueDate)
+        } catch (dateError) {
+          console.warn('Invalid date in overdue task:', task.dueDate)
+          return false
         }
       })
-      
+
+      const top3 = overdueTasks.slice(0, 3).map(task => {
+        const project = projects.find(p => p.id === task.projectId)
+        try {
+          const daysLate = daysBetween(new Date(), task.dueDate)
+          return {
+            id: task.id,
+            name: task.title || task.name || 'Unnamed Task',
+            projectId: task.projectId,
+            projectName: project ? project.name : 'Unknown Project',
+            daysLate
+          }
+        } catch (error) {
+          console.warn('Error processing overdue task:', task)
+          return {
+            id: task.id,
+            name: 'Invalid Task',
+            projectId: task.projectId,
+            projectName: 'Unknown Project',
+            daysLate: 0
+          }
+        }
+      })
+
       return {
         count: overdueTasks.length,
         top3
       }
     } catch (error) {
       console.error('Error getting overdue tasks:', error)
-      throw new Error('Failed to retrieve overdue tasks')
+      return {
+        count: 0,
+        top3: []
+      }
+    }
+  }
+
+  /**
+   * Task CRUD operations
+   */
+  async getAllTasks() {
+    try {
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      const projects = this.getItem(STORAGE_KEYS.PROJECTS) || []
+      const users = this.getItem(STORAGE_KEYS.USERS) || []
+
+      return tasks.map(task => {
+        const project = projects.find(p => p.id === task.projectId)
+        const assignee = users.find(u => u.id === task.assigneeId)
+        return {
+          ...task,
+          projectName: project ? project.name : 'Unknown Project',
+          assigneeName: assignee ? assignee.fullName : 'Unassigned'
+        }
+      })
+    } catch (error) {
+      console.error('Error getting tasks:', error)
+      return []
+    }
+  }
+
+  async getTasksByProject(projectId) {
+    try {
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      const users = this.getItem(STORAGE_KEYS.USERS) || []
+
+      const projectTasks = tasks.filter(task => task.projectId === projectId)
+
+      return projectTasks.map(task => {
+        const assignee = users.find(u => u.id === task.assigneeId)
+        return {
+          ...task,
+          assigneeName: assignee ? assignee.fullName : 'Unassigned'
+        }
+      })
+    } catch (error) {
+      console.error('Error getting project tasks:', error)
+      return []
+    }
+  }
+
+  async createTask(taskData) {
+    try {
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+
+      const newId = Math.max(...tasks.map(t => t.id), 0) + 1
+      const newTask = {
+        id: newId,
+        ...taskData,
+        status: taskData.status || TASK_STATUS.TODO,
+        priority: taskData.priority || 'medium',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+
+      tasks.push(newTask)
+      this.setItem(STORAGE_KEYS.TASKS, tasks)
+
+      return newTask
+    } catch (error) {
+      console.error('Error creating task:', error)
+      throw new Error('Failed to create task')
+    }
+  }
+
+  async updateTask(taskId, updateData) {
+    try {
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      const taskIndex = tasks.findIndex(t => t.id === taskId)
+
+      if (taskIndex === -1) {
+        throw new Error('Task not found')
+      }
+
+      tasks[taskIndex] = {
+        ...tasks[taskIndex],
+        ...updateData,
+        updatedAt: new Date().toISOString()
+      }
+
+      this.setItem(STORAGE_KEYS.TASKS, tasks)
+      return tasks[taskIndex]
+    } catch (error) {
+      console.error('Error updating task:', error)
+      throw new Error('Failed to update task')
+    }
+  }
+
+  async deleteTask(taskId) {
+    try {
+      const tasks = this.getItem(STORAGE_KEYS.TASKS) || []
+      const taskIndex = tasks.findIndex(t => t.id === taskId)
+
+      if (taskIndex === -1) {
+        throw new Error('Task not found')
+      }
+
+      const deletedTask = tasks[taskIndex]
+      tasks.splice(taskIndex, 1)
+      this.setItem(STORAGE_KEYS.TASKS, tasks)
+
+      return deletedTask
+    } catch (error) {
+      console.error('Error deleting task:', error)
+      throw new Error('Failed to delete task')
     }
   }
 

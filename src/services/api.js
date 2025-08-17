@@ -26,7 +26,19 @@ export const authService = {
         return { success: false, error: validation.errors.pin }
       }
 
-      // For demo purposes, any 4+ digit PIN logs in as admin
+      // Check if PIN exists in registered PINs
+      const storedPins = JSON.parse(localStorage.getItem('sizewise_pins') || '[]')
+      const validPin = storedPins.find(p => p.pin === pin && p.isActive)
+
+      if (!validPin) {
+        // Fallback: For demo purposes, any 4+ digit PIN logs in as admin if no PINs are registered
+        if (storedPins.length === 0) {
+          console.log('No PINs registered, using demo mode')
+        } else {
+          return { success: false, error: 'Invalid PIN' }
+        }
+      }
+
       const user = await databaseService.findUserByCredentials('admin')
       if (user) {
         const token = generateToken()
@@ -171,11 +183,20 @@ export const projectService = {
    */
   async update(id, projectData) {
     try {
-      // For demo purposes, return success
-      // In a real app, this would update the database
-      return { success: true, data: { id, ...projectData } }
+      // Validate project data
+      const validation = validateProject(projectData)
+      if (!validation.isValid) {
+        return {
+          success: false,
+          error: 'Validation failed',
+          details: validation.errors
+        }
+      }
+
+      const project = await databaseService.updateProject(id, projectData)
+      return { success: true, data: project }
     } catch (error) {
-      return { success: false, error: 'Failed to update project' }
+      return { success: false, error: error.message || 'Failed to update project' }
     }
   },
 
@@ -186,11 +207,87 @@ export const projectService = {
    */
   async delete(id) {
     try {
-      // For demo purposes, return success
-      // In a real app, this would delete from database
-      return { success: true }
+      if (!id || typeof id !== 'number') {
+        return { success: false, error: 'Invalid project ID' }
+      }
+
+      const deletedProject = await databaseService.deleteProject(id)
+      return { success: true, data: deletedProject }
     } catch (error) {
-      return { success: false, error: 'Failed to delete project' }
+      return { success: false, error: error.message || 'Failed to delete project' }
+    }
+  }
+}
+
+/**
+ * Task service for task management
+ */
+export const taskService = {
+  /**
+   * Get all tasks
+   */
+  async getAll() {
+    try {
+      const tasks = await databaseService.getAllTasks()
+      return { success: true, data: tasks }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch tasks' }
+    }
+  },
+
+  /**
+   * Get tasks by project
+   */
+  async getByProject(projectId) {
+    try {
+      const tasks = await databaseService.getTasksByProject(projectId)
+      return { success: true, data: tasks }
+    } catch (error) {
+      return { success: false, error: 'Failed to fetch project tasks' }
+    }
+  },
+
+  /**
+   * Create new task
+   */
+  async create(taskData) {
+    try {
+      // Validate required fields
+      if (!taskData.title || !taskData.projectId) {
+        return {
+          success: false,
+          error: 'Task title and project are required'
+        }
+      }
+
+      const task = await databaseService.createTask(taskData)
+      return { success: true, data: task }
+    } catch (error) {
+      return { success: false, error: 'Failed to create task' }
+    }
+  },
+
+  /**
+   * Update task
+   */
+  async update(taskId, taskData) {
+    try {
+      const task = await databaseService.updateTask(taskId, taskData)
+      return { success: true, data: task }
+    } catch (error) {
+      return { success: false, error: error.message || 'Failed to update task' }
+    }
+  },
+
+  /**
+   * Delete task
+   */
+  async delete(taskId) {
+    try {
+      const deletedTask = await databaseService.deleteTask(taskId)
+      return { success: true, data: deletedTask }
+    } catch (error) {
+      return { success: false, error: error.message || 'Failed to delete task' }
     }
   }
 }

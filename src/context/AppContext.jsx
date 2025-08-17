@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { authService, dashboardService, projectService } from '../services/api.js';
+import { authService, dashboardService, projectService, taskService } from '../services/api.js';
 
 // Initial state
 const initialState = {
@@ -202,11 +202,13 @@ export function AppProvider({ children }) {
           ownerId: state.user.id
         });
         if (result.success) {
-          // Add the new project to the list
+          // Add the new project to the list immediately for UI feedback
           dispatch({ type: ActionTypes.ADD_PROJECT, payload: result.data });
 
-          // Refresh dashboard data to update KPIs
-          await actions.loadDashboardData();
+          // Small delay to ensure database is updated before refreshing dashboard
+          setTimeout(async () => {
+            await actions.loadDashboardData();
+          }, 500);
 
           dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Project created successfully' });
           return { success: true };
@@ -222,7 +224,123 @@ export function AppProvider({ children }) {
         dispatch({ type: ActionTypes.SET_LOADING, payload: false });
       }
     },
-    
+
+    async updateProject(projectId, projectData) {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+      try {
+        const result = await projectService.update(projectId, projectData);
+        if (result.success) {
+          // Update the project in the list
+          dispatch({ type: ActionTypes.UPDATE_PROJECT, payload: result.data });
+
+          // Refresh dashboard data to update KPIs
+          await actions.loadDashboardData();
+
+          dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Project updated successfully' });
+          return { success: true };
+        } else {
+          dispatch({ type: ActionTypes.SET_ERROR, payload: result.error });
+          return { success: false, error: result.error };
+        }
+      } catch (error) {
+        console.error('Update project error:', error);
+        dispatch({ type: ActionTypes.SET_ERROR, payload: 'Failed to update project' });
+        return { success: false, error: 'Failed to update project' };
+      } finally {
+        dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      }
+    },
+
+    async deleteProject(projectId) {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+      try {
+        const result = await projectService.delete(projectId);
+        if (result.success) {
+          // Remove the project from the list
+          dispatch({ type: ActionTypes.DELETE_PROJECT, payload: projectId });
+
+          // Refresh dashboard data to update KPIs
+          await actions.loadDashboardData();
+
+          dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Project deleted successfully' });
+          return { success: true };
+        } else {
+          dispatch({ type: ActionTypes.SET_ERROR, payload: result.error });
+          return { success: false, error: result.error };
+        }
+      } catch (error) {
+        console.error('Delete project error:', error);
+        dispatch({ type: ActionTypes.SET_ERROR, payload: 'Failed to delete project' });
+        return { success: false, error: 'Failed to delete project' };
+      } finally {
+        dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      }
+    },
+
+    // Task actions
+    async createTask(taskData) {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+      try {
+        const result = await taskService.create(taskData);
+        if (result.success) {
+          dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Task created successfully' });
+          // Reload dashboard data to update task counts
+          await actions.loadDashboardData();
+          return result;
+        } else {
+          dispatch({ type: ActionTypes.SET_ERROR, payload: result.error });
+          return result;
+        }
+      } catch (error) {
+        dispatch({ type: ActionTypes.SET_ERROR, payload: 'Failed to create task' });
+        return { success: false, error: 'Failed to create task' };
+      } finally {
+        dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      }
+    },
+
+    async updateTask(taskId, taskData) {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+      try {
+        const result = await taskService.update(taskId, taskData);
+        if (result.success) {
+          dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Task updated successfully' });
+          // Reload dashboard data to update task counts
+          await actions.loadDashboardData();
+          return result;
+        } else {
+          dispatch({ type: ActionTypes.SET_ERROR, payload: result.error });
+          return result;
+        }
+      } catch (error) {
+        dispatch({ type: ActionTypes.SET_ERROR, payload: 'Failed to update task' });
+        return { success: false, error: 'Failed to update task' };
+      } finally {
+        dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      }
+    },
+
+    async deleteTask(taskId) {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+      try {
+        const result = await taskService.delete(taskId);
+        if (result.success) {
+          dispatch({ type: ActionTypes.SET_SUCCESS, payload: 'Task deleted successfully' });
+          // Reload dashboard data to update task counts
+          await actions.loadDashboardData();
+          return result;
+        } else {
+          dispatch({ type: ActionTypes.SET_ERROR, payload: result.error });
+          return result;
+        }
+      } catch (error) {
+        dispatch({ type: ActionTypes.SET_ERROR, payload: 'Failed to delete task' });
+        return { success: false, error: 'Failed to delete task' };
+      } finally {
+        dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      }
+    },
+
     selectProject: (project) => dispatch({ type: ActionTypes.SELECT_PROJECT, payload: project })
   };
   
@@ -230,7 +348,6 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const initializeApp = async () => {
       await actions.verifyToken();
-
       // Load dashboard data regardless of authentication for demo
       await actions.loadDashboardData();
     };
