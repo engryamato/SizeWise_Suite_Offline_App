@@ -7,7 +7,6 @@ import { useTranslation } from '../i18n';
 
 export default function Dashboard({ onLogout }) {
   const { state, actions } = useApp();
-  const { t } = useTranslation();
   const [timelineView, setTimelineView] = useState('Week');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
@@ -403,7 +402,7 @@ export default function Dashboard({ onLogout }) {
                       <button
                         className="action-btn tasks-btn"
                         onClick={(e) => handleOpenTaskManager(project, e)}
-                        title="Manage tasks"
+                        title={t('general.manageTasks')}
                         aria-label={`Manage tasks for ${project.name}`}
                       >
                         📋
@@ -411,7 +410,7 @@ export default function Dashboard({ onLogout }) {
                       <button
                         className="action-btn edit-btn"
                         onClick={(e) => handleEditProject(project, e)}
-                        title="Edit project"
+                        title={t('project.edit')}
                         aria-label={`Edit ${project.name}`}
                       >
                         ✏️
@@ -419,7 +418,7 @@ export default function Dashboard({ onLogout }) {
                       <button
                         className="action-btn delete-btn"
                         onClick={(e) => handleDeleteProject(project, e)}
-                        title="Delete project"
+                        title={t('project.delete')}
                         aria-label={`Delete ${project.name}`}
                       >
                         🗑️
@@ -534,12 +533,12 @@ export default function Dashboard({ onLogout }) {
         <div className="modal-overlay" onClick={cancelDeleteProject}>
           <div className="modal-content delete-confirm" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Delete Project</h2>
+              <h2>{t('project.delete')}</h2>
               <button className="modal-close" onClick={cancelDeleteProject}>×</button>
             </div>
             <div className="modal-body">
-              <p>Are you sure you want to delete <strong>{showDeleteConfirm.name}</strong>?</p>
-              <p className="warning-text">This action cannot be undone. All associated tasks will also be deleted.</p>
+              <p>{t('project.confirmDeletePrefix')} <strong>{showDeleteConfirm.name}</strong>?</p>
+              <p className="warning-text">{t('general.thisActionCannotBeUndone')}</p>
             </div>
             <div className="modal-actions">
               <button className="btn-secondary" onClick={cancelDeleteProject}>
@@ -591,7 +590,7 @@ export default function Dashboard({ onLogout }) {
                                     e.stopPropagation();
                                     handleOpenTaskManager(item, e);
                                   }}
-                                  title="Manage tasks"
+                                  title={t('general.manageTasks')}
                                   aria-label={`Manage tasks for ${item.name}`}
                                 >
                                   📋
@@ -602,7 +601,7 @@ export default function Dashboard({ onLogout }) {
                                     e.stopPropagation();
                                     handleEditProject(item, e);
                                   }}
-                                  title="Edit project"
+                                  title={t('project.edit')}
                                   aria-label={`Edit ${item.name}`}
                                 >
                                   ✏️
@@ -613,7 +612,7 @@ export default function Dashboard({ onLogout }) {
                                     e.stopPropagation();
                                     handleDeleteProject(item, e);
                                   }}
-                                  title="Delete project"
+                                  title={t('project.delete')}
                                   aria-label={`Delete ${item.name}`}
                                 >
                                   🗑️
