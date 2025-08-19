@@ -17,6 +17,7 @@ export default function Dashboard({ onLogout }) {
   // Panel states for KPI details
   const [activePanel, setActivePanel] = useState(null);
   const [panelData, setPanelData] = useState(null);
+  const [panelVisible, setPanelVisible] = useState(false);
 
   // Load dashboard data on mount if not already loaded
   useEffect(() => {
@@ -40,24 +41,34 @@ export default function Dashboard({ onLogout }) {
   const openPanel = (panelType, data) => {
     setPanelData(data);
     setActivePanel(panelType);
+    setTimeout(() => setPanelVisible(true), 0);
   };
 
-  const closePanel = () => {
-    setActivePanel(null);
-    setPanelData(null);
+  const closePanel = (immediate = false) => {
+    if (immediate) {
+      setPanelVisible(false);
+      setActivePanel(null);
+      setPanelData(null);
+      return;
+    }
+    setPanelVisible(false);
+    setTimeout(() => {
+      setActivePanel(null);
+      setPanelData(null);
+    }, 300);
   };
 
   // Project management handlers
   const handleEditProject = (project, e) => {
     e.stopPropagation(); // Prevent project selection
-    closePanel(); // Close All Projects modal first
+    closePanel(true); // Close All Projects modal first
     setEditingProject(project);
     setIsModalOpen(true);
   };
 
   const handleDeleteProject = (project, e) => {
     e.stopPropagation(); // Prevent project selection
-    closePanel(); // Close All Projects modal first
+    closePanel(true); // Close All Projects modal first
     setShowDeleteConfirm(project);
   };
 
@@ -79,7 +90,7 @@ export default function Dashboard({ onLogout }) {
 
   const handleOpenTaskManager = (project, e) => {
     e.stopPropagation();
-    closePanel(); // Close All Projects modal first
+    closePanel(true); // Close All Projects modal first
     setTaskManagerProjectId(project.id);
     setShowTaskManager(true);
   };
@@ -553,9 +564,12 @@ export default function Dashboard({ onLogout }) {
 
       {/* KPI Detail Panel */}
       {activePanel && panelData && (
-        <div className="panel-overlay" onClick={closePanel}>
+        <div
+          className={`panel-overlay ${panelVisible ? 'visible' : ''}`}
+          onClick={closePanel}
+        >
           <div
-            className={`kpi-detail-panel ${activePanel}`}
+            className={`kpi-detail-panel ${activePanel} ${panelVisible ? 'visible' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="panel-header">
