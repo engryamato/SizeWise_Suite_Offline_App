@@ -952,6 +952,17 @@ html, body {
   }
 }
 
+.projects-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.projects-header,
+.projects-scroll {
+  grid-column: 1 / -1;
+}
+
 .projects-section h3 {
   font-size: 18px;
   font-weight: 600;
@@ -2023,6 +2034,47 @@ html, body {
 .btn-delete:hover {
   background: rgba(239, 68, 68, 0.2);
   border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Dashboard Responsive */
+@media (max-width: 1024px) {
+  .quick-stats,
+  .projects-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header-controls {
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .quick-stats,
+  .projects-section {
+    grid-template-columns: 1fr;
+  }
+
+  .project-actions {
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1 1 calc(50% - 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .action-btn {
+    flex: 1 1 100%;
+  }
 }
 
 /* Task Manager Responsive */
