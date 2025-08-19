@@ -2028,11 +2028,6 @@ html, body {
   }
 }
 
-@media (max-width: 480px) {
-  .action-btn {
-    flex: 1 1 100%;
-  }
-}
 
 /* Task Manager Responsive */
 @media (max-width: 768px) {
