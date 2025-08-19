@@ -3,6 +3,7 @@ import SizeWiseLogo from './SizeWiseLogo';
 import ProjectCreationModal from './ProjectCreationModal';
 import TaskManager from './TaskManager';
 import { useApp } from '../context/AppContext';
+import Icon from './Icon';
 
 export default function Dashboard({ onLogout }) {
   const { state, actions } = useApp();
@@ -214,14 +215,14 @@ export default function Dashboard({ onLogout }) {
       <header className="dashboard-header">
         <SizeWiseLogo width={200} height={50} />
         <div className="header-controls">
-          <div className="search-box">
-            <span className="search-icon">🔍</span>
-            <input type="text" placeholder="Search..." />
+            <div className="search-box">
+              <span className="search-icon"><Icon name="search" /></span>
+              <input type="text" placeholder="Search..." />
+            </div>
+            <button className="settings-btn"><Icon name="settings" /> Settings</button>
+            <button className="logout-btn" onClick={onLogout}>Logout</button>
           </div>
-          <button className="settings-btn">⚙ Settings</button>
-          <button className="logout-btn" onClick={onLogout}>Logout</button>
-        </div>
-      </header>
+        </header>
 
       {/* Success/Error Messages */}
       {state.success && (
@@ -245,7 +246,7 @@ export default function Dashboard({ onLogout }) {
           <span>Last Updated: {new Date().toLocaleTimeString()}</span>
         </div>
         <div className="status-item">
-          <span>📊 {projects.length} Projects • 👥 {projects.filter(p => p.status === 'active').length} Active</span>
+          <span><Icon name="bar_chart" /> {projects.length} Projects • <Icon name="group" /> {projects.filter(p => p.status === 'active').length} Active</span>
         </div>
       </div>
 
@@ -267,15 +268,23 @@ export default function Dashboard({ onLogout }) {
               tabIndex={0}
               aria-label="View tasks due this week details"
             >
-              <div className="stat-icon">📅</div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.tasksThisWeek}</div>
-                <div className="stat-label">Tasks Due This Week</div>
-                <div className="stat-trend">
-                  {dashboardData.tasksThisWeek > 0 ? '📈 Active' : '✅ Clear'}
+                <div className="stat-icon"><Icon name="calendar_today" /></div>
+                <div className="stat-content">
+                  <div className="stat-number">{dashboardData.tasksThisWeek}</div>
+                  <div className="stat-label">Tasks Due This Week</div>
+                  <div className="stat-trend">
+                    {dashboardData.tasksThisWeek > 0 ? (
+                      <>
+                        <Icon name="trending_up" className="warning" /> Active
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="check_circle" className="success" /> Clear
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div
               className="stat-card overdue-tasks"
@@ -285,15 +294,23 @@ export default function Dashboard({ onLogout }) {
               tabIndex={0}
               aria-label="View overdue tasks details"
             >
-              <div className="stat-icon">⚠️</div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.overdue.count}</div>
-                <div className="stat-label">Overdue Tasks</div>
-                <div className="stat-trend">
-                  {dashboardData.overdue.count > 0 ? '🔴 Needs Attention' : '✅ All Clear'}
+                <div className="stat-icon"><Icon name="warning" /></div>
+                <div className="stat-content">
+                  <div className="stat-number">{dashboardData.overdue.count}</div>
+                  <div className="stat-label">Overdue Tasks</div>
+                  <div className="stat-trend">
+                    {dashboardData.overdue.count > 0 ? (
+                      <>
+                        <Icon name="error" className="danger" /> Needs Attention
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="check_circle" className="success" /> All Clear
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div
               className="stat-card milestones"
@@ -303,17 +320,17 @@ export default function Dashboard({ onLogout }) {
               tabIndex={0}
               aria-label="View completed milestones details"
             >
-              <div className="stat-icon">🎯</div>
-              <div className="stat-content">
-                <div className="stat-number">
-                  {dashboardData.milestones.wonThisMonth + dashboardData.milestones.finishedThisMonth}
-                </div>
-                <div className="stat-label">Completed This Month</div>
-                <div className="stat-trend">
-                  🏆 {dashboardData.milestones.wonThisMonth} Won, ✅ {dashboardData.milestones.finishedThisMonth} Finished
+                <div className="stat-icon"><Icon name="flag" /></div>
+                <div className="stat-content">
+                  <div className="stat-number">
+                    {dashboardData.milestones.wonThisMonth + dashboardData.milestones.finishedThisMonth}
+                  </div>
+                  <div className="stat-label">Completed This Month</div>
+                  <div className="stat-trend">
+                    <Icon name="emoji_events" /> {dashboardData.milestones.wonThisMonth} Won, <Icon name="check_circle" className="success" /> {dashboardData.milestones.finishedThisMonth} Finished
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div
               className="stat-card total-projects"
@@ -323,16 +340,16 @@ export default function Dashboard({ onLogout }) {
               tabIndex={0}
               aria-label="View all projects details"
             >
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <div className="stat-number">{projects.length}</div>
-                <div className="stat-label">Total Projects</div>
-                <div className="stat-trend">
-                  💼 {projects.filter(p => p.status === 'active').length} Active,
-                  ✅ {projects.filter(p => p.status === 'completed').length} Done
+                <div className="stat-icon"><Icon name="bar_chart" /></div>
+                <div className="stat-content">
+                  <div className="stat-number">{projects.length}</div>
+                  <div className="stat-label">Total Projects</div>
+                  <div className="stat-trend">
+                    <Icon name="work" /> {projects.filter(p => p.status === 'active').length} Active,
+                    <Icon name="check_circle" className="success" /> {projects.filter(p => p.status === 'completed').length} Done
+                  </div>
                 </div>
               </div>
-            </div>
           </div>
         </div>
         
@@ -355,7 +372,7 @@ export default function Dashboard({ onLogout }) {
           <div className="projects-scroll">
             {projects.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">📋</div>
+                <div className="empty-icon"><Icon name="assignment" /></div>
                 <p>No projects found</p>
                 <p className="empty-subtitle">Create your first project to get started</p>
               </div>
@@ -378,52 +395,52 @@ export default function Dashboard({ onLogout }) {
                   role="button"
                   aria-label={`Select project ${project.name}`}
                 >
-                  <div className="project-info">
-                    <div className="project-main">
-                      <span className="project-name">{project.name}</span>
-                      <span className="project-location">📍 {project.location}</span>
+                    <div className="project-info">
+                      <div className="project-main">
+                        <span className="project-name">{project.name}</span>
+                        <span className="project-location"><Icon name="location_on" /> {project.location}</span>
+                      </div>
+                      <div className="project-meta">
+                        <span className="project-owner"><Icon name="person" /> {project.ownerName || 'Unassigned'}</span>
+                        <span className="project-dates">
+                          <Icon name="calendar_today" /> {new Date(project.startDate).toLocaleDateString()} - {new Date(project.dueDate).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                    <div className="project-meta">
-                      <span className="project-owner">👤 {project.ownerName || 'Unassigned'}</span>
-                      <span className="project-dates">
-                        📅 {new Date(project.startDate).toLocaleDateString()} - {new Date(project.dueDate).toLocaleDateString()}
+                    <div className="project-status-section">
+                      <span className={`project-status status-${project.status}`}>
+                        {project.status.toUpperCase()}
                       </span>
+                      <span className={`project-priority priority-${project.priority}`}>
+                        <Icon name="circle" /> {project.priority}
+                      </span>
+                      <div className="project-actions">
+                        <button
+                          className="action-btn tasks-btn"
+                          onClick={(e) => handleOpenTaskManager(project, e)}
+                          title="Manage tasks"
+                          aria-label={`Manage tasks for ${project.name}`}
+                        >
+                          <Icon name="assignment" />
+                        </button>
+                        <button
+                          className="action-btn edit-btn"
+                          onClick={(e) => handleEditProject(project, e)}
+                          title="Edit project"
+                          aria-label={`Edit ${project.name}`}
+                        >
+                          <Icon name="edit" />
+                        </button>
+                        <button
+                          className="action-btn delete-btn"
+                          onClick={(e) => handleDeleteProject(project, e)}
+                          title="Delete project"
+                          aria-label={`Delete ${project.name}`}
+                        >
+                          <Icon name="delete" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="project-status-section">
-                    <span className={`project-status status-${project.status}`}>
-                      {project.status.toUpperCase()}
-                    </span>
-                    <span className={`project-priority priority-${project.priority}`}>
-                      {project.priority === 'high' ? '🔴' : project.priority === 'medium' ? '🟡' : '🟢'} {project.priority}
-                    </span>
-                    <div className="project-actions">
-                      <button
-                        className="action-btn tasks-btn"
-                        onClick={(e) => handleOpenTaskManager(project, e)}
-                        title="Manage tasks"
-                        aria-label={`Manage tasks for ${project.name}`}
-                      >
-                        📋
-                      </button>
-                      <button
-                        className="action-btn edit-btn"
-                        onClick={(e) => handleEditProject(project, e)}
-                        title="Edit project"
-                        aria-label={`Edit ${project.name}`}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="action-btn delete-btn"
-                        onClick={(e) => handleDeleteProject(project, e)}
-                        title="Delete project"
-                        aria-label={`Delete ${project.name}`}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
                 </div>
               ))
             )}
@@ -582,76 +599,84 @@ export default function Dashboard({ onLogout }) {
                               <span className={`item-status status-${item.status}`}>
                                 {item.status.toUpperCase()}
                               </span>
-                              <div className="item-actions">
-                                <button
-                                  className="action-btn tasks-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenTaskManager(item, e);
-                                  }}
-                                  title="Manage tasks"
-                                  aria-label={`Manage tasks for ${item.name}`}
-                                >
-                                  📋
-                                </button>
-                                <button
-                                  className="action-btn edit-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditProject(item, e);
-                                  }}
-                                  title="Edit project"
-                                  aria-label={`Edit ${item.name}`}
-                                >
-                                  ✏️
-                                </button>
-                                <button
-                                  className="action-btn delete-btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteProject(item, e);
-                                  }}
-                                  title="Delete project"
-                                  aria-label={`Delete ${item.name}`}
-                                >
-                                  🗑️
-                                </button>
+                                <div className="item-actions">
+                                  <button
+                                    className="action-btn tasks-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenTaskManager(item, e);
+                                    }}
+                                    title="Manage tasks"
+                                    aria-label={`Manage tasks for ${item.name}`}
+                                  >
+                                    <Icon name="assignment" />
+                                  </button>
+                                  <button
+                                    className="action-btn edit-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditProject(item, e);
+                                    }}
+                                    title="Edit project"
+                                    aria-label={`Edit ${item.name}`}
+                                  >
+                                    <Icon name="edit" />
+                                  </button>
+                                  <button
+                                    className="action-btn delete-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteProject(item, e);
+                                    }}
+                                    title="Delete project"
+                                    aria-label={`Delete ${item.name}`}
+                                  >
+                                    <Icon name="delete" />
+                                  </button>
+                                </div>
+                            </div>
+                            <div className="item-details">
+                                <span className="item-location"><Icon name="location_on" /> {item.location}</span>
+                                <span className="item-owner"><Icon name="person" /> {item.ownerName}</span>
+                                <span className="item-priority priority-${item.priority}">
+                                  <Icon name="circle" /> {item.priority}
+                                </span>
                               </div>
-                            </div>
-                            <div className="item-details">
-                              <span className="item-location">📍 {item.location}</span>
-                              <span className="item-owner">👤 {item.ownerName}</span>
-                              <span className="item-priority priority-${item.priority}">
-                                {item.priority === 'high' ? '🔴' : item.priority === 'medium' ? '🟡' : '🟢'} {item.priority}
-                              </span>
-                            </div>
-                            <div className="item-dates">
-                              📅 {new Date(item.startDate).toLocaleDateString()} - {new Date(item.dueDate).toLocaleDateString()}
-                            </div>
-                          </>
-                        ) : activePanel === 'overdue' ? (
-                          <>
-                            <div className="item-header">
-                              <span className="item-name">{item.name}</span>
-                              <span className="overdue-days">⚠️ {item.daysLate} days late</span>
-                            </div>
-                            <div className="item-details">
-                              <span className="item-project">📋 {item.projectName}</span>
-                            </div>
-                          </>
-                        ) : activePanel === 'milestones' ? (
-                          <>
-                            <div className="item-header">
-                              <span className="item-name">{item.name}</span>
-                              <span className={`milestone-type type-${item.type}`}>
-                                {item.type === 'won' ? '🏆 Won' : '✅ Finished'}
-                              </span>
-                            </div>
-                            <div className="item-details">
-                              <span className="item-date">📅 {new Date(item.date).toLocaleDateString()}</span>
-                            </div>
-                          </>
-                        ) : (
+                              <div className="item-dates">
+                                <Icon name="calendar_today" /> {new Date(item.startDate).toLocaleDateString()} - {new Date(item.dueDate).toLocaleDateString()}
+                              </div>
+                            </>
+                          ) : activePanel === 'overdue' ? (
+                            <>
+                              <div className="item-header">
+                                <span className="item-name">{item.name}</span>
+                                <span className="overdue-days"><Icon name="warning" className="danger" /> {item.daysLate} days late</span>
+                              </div>
+                              <div className="item-details">
+                                <span className="item-project"><Icon name="assignment" /> {item.projectName}</span>
+                              </div>
+                            </>
+                          ) : activePanel === 'milestones' ? (
+                            <>
+                              <div className="item-header">
+                                <span className="item-name">{item.name}</span>
+                                <span className={`milestone-type type-${item.type}`}>
+                                  {item.type === 'won' ? (
+                                    <>
+                                      <Icon name="emoji_events" /> Won
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Icon name="check_circle" className="success" /> Finished
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                              <div className="item-details">
+                                <span className="item-date"><Icon name="calendar_today" /> {new Date(item.date).toLocaleDateString()}</span>
+                              </div>
+                            </>
+                          ) : (
                           <div className="item-header">
                             <span className="item-name">{item.name || item.title}</span>
                           </div>
@@ -660,10 +685,10 @@ export default function Dashboard({ onLogout }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="no-items">
-                    <div className="no-items-icon">📋</div>
-                    <p>No detailed items available</p>
-                  </div>
+                    <div className="no-items">
+                      <div className="no-items-icon"><Icon name="assignment" /></div>
+                      <p>No detailed items available</p>
+                    </div>
                 )}
               </div>
             </div>
