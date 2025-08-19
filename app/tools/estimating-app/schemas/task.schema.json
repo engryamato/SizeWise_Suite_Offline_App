@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "task.schema.json",
+  "$comment": "\ud83d\udce6 Phase 0.0 \u2013 Estimating Core Setup",
+  "title": "Task",
+  "type": "object",
+  "required": ["title", "projectId"],
+  "properties": {
+    "id": { "type": "number" },
+    "projectId": { "type": "number" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "description": { "type": ["string", "null"], "maxLength": 2000 },
+    "status": { "type": "string", "enum": ["pending", "in_progress", "completed"], "default": "pending" },
+    "priority": { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+    "startDate": { "type": ["string", "null"] },
+    "dueDate": { "type": ["string", "null"] }
+  },
+  "additionalProperties": false
+}
