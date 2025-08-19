@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../i18n';
+import { taskService } from '../services/api.js';
 
 export default function TaskManager({ projectId, onClose }) {
   const { state, actions } = useApp();
@@ -26,20 +27,16 @@ export default function TaskManager({ projectId, onClose }) {
 
   const loadProjectTasks = async () => {
     try {
-      // Use the task service to get tasks for this project
-      const result = await fetch(`/api/tasks/project/${projectId}`);
-      if (result.ok) {
-        const data = await result.json();
-        setTasks(data.data || []);
+      const result = await taskService.getByProject(projectId);
+      if (result.success) {
+        setTasks(result.data || []);
       } else {
-        // Fallback: get all tasks and filter by project
         const allTasks = JSON.parse(localStorage.getItem('sizewise_tasks') || '[]');
         const projectTasks = allTasks.filter(task => task.projectId === projectId);
         setTasks(projectTasks);
       }
     } catch (error) {
       console.error('Failed to load tasks:', error);
-      // Fallback to localStorage
       const allTasks = JSON.parse(localStorage.getItem('sizewise_tasks') || '[]');
       const projectTasks = allTasks.filter(task => task.projectId === projectId);
       setTasks(projectTasks);
