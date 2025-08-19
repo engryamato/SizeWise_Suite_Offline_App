@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "release": "node scripts/updateChangelog.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
