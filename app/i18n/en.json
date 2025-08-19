@@ -62,4 +62,12 @@
     "failedToUpdateTask": "Failed to update task",
     "failedToDeleteTask": "Failed to delete task"
   }
+,
+  "validation": {
+    "required": "is required",
+    "invalid": "is invalid",
+    "tooShort": "is too short",
+    "tooLong": "is too long",
+    "dueAfterStart": "must be after start date"
+  }
 }

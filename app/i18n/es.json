@@ -60,5 +60,13 @@
     "failedToCreateTask": "No se pudo crear la tarea",
     "failedToUpdateTask": "No se pudo actualizar la tarea",
     "failedToDeleteTask": "No se pudo eliminar la tarea"
+,
+  "validation": {
+    "required": "es obligatorio",
+    "invalid": "no es válido",
+    "tooShort": "es demasiado corto",
+    "tooLong": "es demasiado largo",
+    "dueAfterStart": "debe ser posterior a la fecha de inicio"
+  }
   }
 }

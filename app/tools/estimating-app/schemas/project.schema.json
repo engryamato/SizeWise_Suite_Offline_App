@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "project.schema.json",
+  "$comment": "\ud83d\udce6 Phase 0.0 \u2013 Estimating Core Setup",
+  "title": "Project",
+  "type": "object",
+  "required": ["name", "startDate", "dueDate", "ownerId"],
+  "properties": {
+    "id": { "type": "number" },
+    "name": { "type": "string", "minLength": 3, "maxLength": 120 },
+    "description": { "type": ["string", "null"], "maxLength": 2000 },
+    "location": { "type": ["string", "null"], "maxLength": 255 },
+    "startDate": { "type": "string" },
+    "dueDate": { "type": "string" },
+    "priority": { "type": "string", "enum": ["low", "medium", "high"], "default": "medium" },
+    "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "ownerId": { "type": "number" },
+    "status": { "type": "string" }
+  },
+  "additionalProperties": false
+}

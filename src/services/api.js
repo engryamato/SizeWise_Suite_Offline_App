@@ -1,5 +1,7 @@
 import databaseService from './database.js'
-import { validateProject, validatePin } from '../utils/validation.js'
+import { validateProject } from '../../app/tools/estimating-app/validators/project.js'
+import { validateTask } from '../../app/tools/estimating-app/validators/task.js'
+import { validatePin } from '../utils/validation.js'
 import { APP_CONFIG, STORAGE_KEYS } from '../constants/index.js'
 
 /**
@@ -155,7 +157,7 @@ export const projectService = {
     try {
       // Validate project data
       const validation = validateProject(projectData)
-      if (!validation.isValid) {
+      if (!validation.valid) {
         return {
           success: false,
           error: 'Validation failed',
@@ -185,7 +187,7 @@ export const projectService = {
     try {
       // Validate project data
       const validation = validateProject(projectData)
-      if (!validation.isValid) {
+      if (!validation.valid) {
         return {
           success: false,
           error: 'Validation failed',
@@ -252,11 +254,12 @@ export const taskService = {
    */
   async create(taskData) {
     try {
-      // Validate required fields
-      if (!taskData.title || !taskData.projectId) {
+      const validation = validateTask(taskData)
+      if (!validation.valid) {
         return {
           success: false,
-          error: 'Task title and project are required'
+          error: 'Validation failed',
+          details: validation.errors
         }
       }
 
@@ -272,6 +275,15 @@ export const taskService = {
    */
   async update(taskId, taskData) {
     try {
+      const validation = validateTask(taskData)
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: 'Validation failed',
+          details: validation.errors
+        }
+      }
+
       const task = await databaseService.updateTask(taskId, taskData)
       return { success: true, data: task }
     } catch (error) {

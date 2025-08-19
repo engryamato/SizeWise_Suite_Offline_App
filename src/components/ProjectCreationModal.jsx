@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { useTranslation } from '../i18n';
+import { validateProject } from '../../app/tools/estimating-app/validators/project.js';
 
 export default function ProjectCreationModal({ isOpen, onClose, project = null, mode = 'create' }) {
-  const { actions } = useApp();
+  const { actions, state } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -51,44 +52,74 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
-  // Validate form
+  // Map validator issues to i18n-friendly messages
+  const mapIssueToMessage = (path, message) => {
+    switch (path) {
+      case 'name':
+        if (/at least|minimum|min/i.test(message)) return t('project.name') + ' ' + t('validation.tooShort')
+        if (/at most|maximum|max/i.test(message)) return t('project.name') + ' ' + t('validation.tooLong')
+        return t('project.name') + ' ' + t('validation.invalid')
+      case 'description':
+        if (/at most|maximum|max/i.test(message)) return t('project.description') + ' ' + t('validation.tooLong')
+        return t('project.description') + ' ' + t('validation.invalid')
+      case 'location':
+        if (/at most|maximum|max/i.test(message)) return t('project.location') + ' ' + t('validation.tooLong')
+        return t('project.location') + ' ' + t('validation.invalid')
+      case 'priority':
+        return t('project.priority') + ' ' + t('validation.invalid')
+      default:
+        return message;
+    }
+  };
+
+  // Validate form using schema
   const validateForm = () => {
+    const projectData = {
+      ...formData,
+      ownerId: state.user?.id
+    };
+
     const newErrors = {};
 
-    // Required fields
-    if (!formData.name.trim()) {
-      newErrors.name = 'Project name is required';
-    } else if (formData.name.trim().length < 3) {
-      newErrors.name = 'Project name must be at least 3 characters';
-    } else if (formData.name.trim().length > 120) {
-      newErrors.name = 'Project name must be less than 120 characters';
+    // Required fields (friendly, localized)
+    if (!projectData.name || !projectData.name.trim()) {
+      newErrors.name = `${t('project.name')} ${t('validation.required')}`;
+    }
+    if (!projectData.startDate) {
+      newErrors.startDate = `${t('project.startDate')} ${t('validation.required')}`;
+    }
+    if (!projectData.dueDate) {
+      newErrors.dueDate = `${t('project.dueDate')} ${t('validation.required')}`;
     }
 
-    if (!formData.startDate) {
-      newErrors.startDate = 'Start date is required';
-    }
-
-    if (!formData.dueDate) {
-      newErrors.dueDate = 'Due date is required';
-    }
-
-    // Date validation
-    if (formData.startDate && formData.dueDate) {
-      if (new Date(formData.dueDate) <= new Date(formData.startDate)) {
-        newErrors.dueDate = 'Due date must be after start date';
+    // Schema validation via Zod (map to localized messages)
+    const { valid, errors: validationErrors } = validateProject({
+      ...projectData,
+      name: projectData.name?.trim() || '',
+      description: projectData.description?.trim() || null,
+      location: projectData.location?.trim() || null
+    });
+    if (!valid) {
+      for (const err of validationErrors) {
+        const key = err.path;
+        if (!newErrors[key]) {
+          newErrors[key] = mapIssueToMessage(key, err.message);
+        }
       }
     }
 
-    // Description length
-    if (formData.description && formData.description.length > 2000) {
-      newErrors.description = 'Description must be less than 2000 characters';
+    // Cross-field validation
+    if (projectData.startDate && projectData.dueDate) {
+      if (new Date(projectData.dueDate) <= new Date(projectData.startDate)) {
+        newErrors.dueDate = `${t('project.dueDate')} ${t('validation.dueAfterStart')}`;
+      }
     }
 
     setErrors(newErrors);
@@ -109,7 +140,8 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
         ...formData,
         name: formData.name.trim(),
         description: formData.description.trim() || null,
-        location: formData.location.trim() || null
+        location: formData.location.trim() || null,
+        ownerId: state.user?.id
       };
 
       let result;
