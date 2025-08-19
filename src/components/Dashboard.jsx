@@ -3,10 +3,12 @@ import SizeWiseLogo from './SizeWiseLogo';
 import ProjectCreationModal from './ProjectCreationModal';
 import TaskManager from './TaskManager';
 import { useApp } from '../context/AppContext';
+import Icon from './Icon';
 import { useTranslation } from '../i18n';
 
 export default function Dashboard({ onLogout }) {
   const { state, actions } = useApp();
+  const { t } = useTranslation();
   const [timelineView, setTimelineView] = useState('Week');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
