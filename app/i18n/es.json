@@ -1,0 +1,46 @@
+{
+  "task": {
+    "management": "Gestión de Tareas",
+    "add": "+ Agregar Tarea",
+    "edit": "Editar Tarea",
+    "create": "Crear Nueva Tarea",
+    "title": "Título de la Tarea *",
+    "description": "Descripción",
+    "priority": "Prioridad",
+    "status": "Estado",
+    "dueDate": "Fecha de Vencimiento",
+    "update": "Actualizar Tarea",
+    "createButton": "Crear Tarea",
+    "none": "No hay tareas aún. ¡Crea tu primera tarea para comenzar!",
+    "editTitle": "Editar tarea",
+    "deleteTitle": "Eliminar tarea",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar esta tarea?"
+  },
+  "project": {
+    "edit": "Editar Proyecto",
+    "create": "Crear Nuevo Proyecto",
+    "name": "Nombre del Proyecto",
+    "namePlaceholder": "Ingrese el nombre del proyecto",
+    "description": "Descripción",
+    "descriptionPlaceholder": "Ingrese la descripción del proyecto",
+    "location": "Ubicación",
+    "locationPlaceholder": "Ingrese la ubicación del proyecto",
+    "startDate": "Fecha de Inicio",
+    "dueDate": "Fecha de Entrega",
+    "priority": "Prioridad",
+    "update": "Actualizar Proyecto",
+    "createButton": "Crear Proyecto",
+    "updating": "Actualizando...",
+    "creating": "Creando..."
+  },
+  "general": {
+    "low": "Baja",
+    "medium": "Media",
+    "high": "Alta",
+    "cancel": "Cancelar",
+    "toDo": "Por Hacer",
+    "inProgress": "En Progreso",
+    "review": "Revisión",
+    "completed": "Completado"
+  }
+}

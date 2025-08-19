@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../i18n';
 
 export default function ProjectCreationModal({ isOpen, onClose, project = null, mode = 'create' }) {
   const { actions } = useApp();
@@ -14,6 +15,7 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { t } = useTranslation();
 
   // Reset form when modal opens/closes or populate with project data for editing
   useEffect(() => {
@@ -148,14 +150,14 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{mode === 'edit' ? 'Edit Project' : 'Create New Project'}</h2>
+          <h2>{mode === 'edit' ? t('project.edit') : t('project.create')}</h2>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="project-form">
           {/* Project Name */}
           <div className="form-group">
-            <label htmlFor="name">Project Name *</label>
+            <label htmlFor="name">{t('project.name')} *</label>
             <input
               type="text"
               id="name"
@@ -163,7 +165,7 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
               value={formData.name}
               onChange={handleChange}
               className={errors.name ? 'error' : ''}
-              placeholder="Enter project name"
+              placeholder={t('project.namePlaceholder')}
               maxLength={120}
               autoFocus
             />
@@ -172,14 +174,14 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
 
           {/* Description */}
           <div className="form-group">
-            <label htmlFor="description">Description</label>
+            <label htmlFor="description">{t('project.description')}</label>
             <textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               className={errors.description ? 'error' : ''}
-              placeholder="Enter project description"
+              placeholder={t('project.descriptionPlaceholder')}
               rows={3}
               maxLength={2000}
             />
@@ -188,21 +190,21 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
 
           {/* Location */}
           <div className="form-group">
-            <label htmlFor="location">Location</label>
+            <label htmlFor="location">{t('project.location')}</label>
             <input
               type="text"
               id="location"
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="Enter project location"
+              placeholder={t('project.locationPlaceholder')}
             />
           </div>
 
           {/* Dates */}
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="startDate">Start Date *</label>
+              <label htmlFor="startDate">{t('project.startDate')} *</label>
               <input
                 type="date"
                 id="startDate"
@@ -215,7 +217,7 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
             </div>
 
             <div className="form-group">
-              <label htmlFor="dueDate">Due Date *</label>
+              <label htmlFor="dueDate">{t('project.dueDate')} *</label>
               <input
                 type="date"
                 id="dueDate"
@@ -230,23 +232,23 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
 
           {/* Priority */}
           <div className="form-group">
-            <label htmlFor="priority">Priority</label>
+            <label htmlFor="priority">{t('project.priority')}</label>
             <select
               id="priority"
               name="priority"
               value={formData.priority}
               onChange={handleChange}
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
+              <option value="low">{t('general.low')}</option>
+              <option value="medium">{t('general.medium')}</option>
+              <option value="high">{t('general.high')}</option>
             </select>
           </div>
 
           {/* Form Actions */}
           <div className="form-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>
-              Cancel
+              {t('general.cancel')}
             </button>
             <button
               type="submit"
@@ -254,8 +256,8 @@ export default function ProjectCreationModal({ isOpen, onClose, project = null, 
               disabled={isSubmitting}
             >
               {isSubmitting
-                ? (mode === 'edit' ? 'Updating...' : 'Creating...')
-                : (mode === 'edit' ? 'Update Project' : 'Create Project')
+                ? (mode === 'edit' ? t('project.updating') : t('project.creating'))
+                : (mode === 'edit' ? t('project.update') : t('project.createButton'))
               }
             </button>
           </div>
