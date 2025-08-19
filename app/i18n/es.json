@@ -18,6 +18,7 @@
   },
   "project": {
     "edit": "Editar Proyecto",
+    "delete": "Eliminar Proyecto",
     "create": "Crear Nuevo Proyecto",
     "name": "Nombre del Proyecto",
     "namePlaceholder": "Ingrese el nombre del proyecto",
@@ -31,16 +32,33 @@
     "update": "Actualizar Proyecto",
     "createButton": "Crear Proyecto",
     "updating": "Actualizando...",
-    "creating": "Creando..."
+    "creating": "Creando...",
+    "confirmDelete": "¿Estás seguro de que deseas eliminar"
   },
   "general": {
     "low": "Baja",
     "medium": "Media",
     "high": "Alta",
     "cancel": "Cancelar",
+    "manageTasks": "Gestionar tareas",
+    "thisActionCannotBeUndone": "Esta acción no se puede deshacer. Todas las tareas asociadas también se eliminarán.",
     "toDo": "Por Hacer",
     "inProgress": "En Progreso",
     "review": "Revisión",
     "completed": "Completado"
+  },
+  "messages": {
+    "projectCreatedSuccessfully": "Proyecto creado con éxito",
+    "projectUpdatedSuccessfully": "Proyecto actualizado con éxito",
+    "projectDeletedSuccessfully": "Proyecto eliminado con éxito",
+    "failedToCreateProject": "No se pudo crear el proyecto",
+    "failedToUpdateProject": "No se pudo actualizar el proyecto",
+    "failedToDeleteProject": "No se pudo eliminar el proyecto",
+    "taskCreatedSuccessfully": "Tarea creada con éxito",
+    "taskUpdatedSuccessfully": "Tarea actualizada con éxito",
+    "taskDeletedSuccessfully": "Tarea eliminada con éxito",
+    "failedToCreateTask": "No se pudo crear la tarea",
+    "failedToUpdateTask": "No se pudo actualizar la tarea",
+    "failedToDeleteTask": "No se pudo eliminar la tarea"
   }
 }
