@@ -1,0 +1,46 @@
+{
+  "task": {
+    "management": "Task Management",
+    "add": "+ Add Task",
+    "edit": "Edit Task",
+    "create": "Create New Task",
+    "title": "Task Title *",
+    "description": "Description",
+    "priority": "Priority",
+    "status": "Status",
+    "dueDate": "Due Date",
+    "update": "Update Task",
+    "createButton": "Create Task",
+    "none": "No tasks yet. Create your first task to get started!",
+    "editTitle": "Edit task",
+    "deleteTitle": "Delete task",
+    "confirmDelete": "Are you sure you want to delete this task?"
+  },
+  "project": {
+    "edit": "Edit Project",
+    "create": "Create New Project",
+    "name": "Project Name",
+    "namePlaceholder": "Enter project name",
+    "description": "Description",
+    "descriptionPlaceholder": "Enter project description",
+    "location": "Location",
+    "locationPlaceholder": "Enter project location",
+    "startDate": "Start Date",
+    "dueDate": "Due Date",
+    "priority": "Priority",
+    "update": "Update Project",
+    "createButton": "Create Project",
+    "updating": "Updating...",
+    "creating": "Creating..."
+  },
+  "general": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "cancel": "Cancel",
+    "toDo": "To Do",
+    "inProgress": "In Progress",
+    "review": "Review",
+    "completed": "Completed"
+  }
+}

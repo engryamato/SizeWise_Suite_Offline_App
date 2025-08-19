@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useTranslation } from '../i18n';
 
 export default function TaskManager({ projectId, onClose }) {
   const { state, actions } = useApp();
   const [tasks, setTasks] = useState([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -92,7 +94,7 @@ export default function TaskManager({ projectId, onClose }) {
   };
 
   const handleDelete = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
+    if (window.confirm(t('task.confirmDelete'))) {
       const result = await actions.deleteTask(taskId);
       if (result.success) {
         loadProjectTasks();
@@ -130,13 +132,13 @@ export default function TaskManager({ projectId, onClose }) {
     <div className="task-manager-overlay">
       <div className="task-manager">
         <div className="task-manager-header">
-          <h2>Task Management</h2>
+          <h2>{t('task.management')}</h2>
           <div className="header-actions">
-            <button 
+            <button
               className="btn-primary"
               onClick={() => setShowTaskForm(true)}
             >
-              + Add Task
+              {t('task.add')}
             </button>
             <button className="btn-close" onClick={onClose}>×</button>
           </div>
@@ -145,11 +147,11 @@ export default function TaskManager({ projectId, onClose }) {
         {showTaskForm && (
           <div className="task-form-container">
             <form onSubmit={handleSubmit} className="task-form">
-              <h3>{editingTask ? 'Edit Task' : 'Create New Task'}</h3>
+              <h3>{editingTask ? t('task.edit') : t('task.create')}</h3>
               
               <div className="form-row">
                 <div className="form-group">
-                  <label>Task Title *</label>
+                  <label>{t('task.title')}</label>
                   <input
                     type="text"
                     value={formData.title}
@@ -158,20 +160,20 @@ export default function TaskManager({ projectId, onClose }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Priority</label>
+                  <label>{t('task.priority')}</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({...formData, priority: e.target.value})}
                   >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
+                    <option value="low">{t('general.low')}</option>
+                    <option value="medium">{t('general.medium')}</option>
+                    <option value="high">{t('general.high')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="form-group">
-                <label>Description</label>
+                <label>{t('task.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -181,19 +183,19 @@ export default function TaskManager({ projectId, onClose }) {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Status</label>
+                  <label>{t('task.status')}</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
                   >
-                    <option value="todo">To Do</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="review">Review</option>
-                    <option value="completed">Completed</option>
+                    <option value="todo">{t('general.toDo')}</option>
+                    <option value="in-progress">{t('general.inProgress')}</option>
+                    <option value="review">{t('general.review')}</option>
+                    <option value="completed">{t('general.completed')}</option>
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Due Date</label>
+                  <label>{t('task.dueDate')}</label>
                   <input
                     type="date"
                     value={formData.dueDate}
@@ -204,7 +206,7 @@ export default function TaskManager({ projectId, onClose }) {
 
               <div className="form-actions">
                 <button type="submit" className="btn-primary">
-                  {editingTask ? 'Update Task' : 'Create Task'}
+                  {editingTask ? t('task.update') : t('task.createButton')}
                 </button>
                 <button 
                   type="button" 
@@ -214,7 +216,7 @@ export default function TaskManager({ projectId, onClose }) {
                     setEditingTask(null);
                   }}
                 >
-                  Cancel
+                  {t('general.cancel')}
                 </button>
               </div>
             </form>
@@ -224,7 +226,7 @@ export default function TaskManager({ projectId, onClose }) {
         <div className="task-list">
           {tasks.length === 0 ? (
             <div className="empty-state">
-              <p>No tasks yet. Create your first task to get started!</p>
+              <p>{t('task.none')}</p>
             </div>
           ) : (
             <div className="task-grid">
@@ -265,16 +267,16 @@ export default function TaskManager({ projectId, onClose }) {
                               onChange={(e) => handleStatusChange(task.id, e.target.value)}
                               className="status-select"
                             >
-                              <option value="todo">To Do</option>
-                              <option value="in-progress">In Progress</option>
-                              <option value="review">Review</option>
-                              <option value="completed">Completed</option>
+                              <option value="todo">{t('general.toDo')}</option>
+                              <option value="in-progress">{t('general.inProgress')}</option>
+                              <option value="review">{t('general.review')}</option>
+                              <option value="completed">{t('general.completed')}</option>
                             </select>
                             
                             <button
                               className="btn-edit"
                               onClick={() => handleEdit(task)}
-                              title="Edit task"
+                              title={t('task.editTitle')}
                             >
                               ✏️
                             </button>
@@ -282,7 +284,7 @@ export default function TaskManager({ projectId, onClose }) {
                             <button
                               className="btn-delete"
                               onClick={() => handleDelete(task.id)}
-                              title="Delete task"
+                              title={t('task.deleteTitle')}
                             >
                               🗑️
                             </button>
