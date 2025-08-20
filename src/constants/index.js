@@ -5,6 +5,9 @@ export const APP_CONFIG = {
   VERSION: '1.0.0',
   AUTO_REFRESH_INTERVAL: 30000, // 30 seconds
   SESSION_TIMEOUT: 24 * 60 * 60 * 1000, // 24 hours
+  FEATURES: {
+    SERVICE_WORKER: (typeof window !== 'undefined' ? (window.__SW_ENABLED__ ?? false) : false)
+  }
 }
 
 export const STORAGE_KEYS = {
