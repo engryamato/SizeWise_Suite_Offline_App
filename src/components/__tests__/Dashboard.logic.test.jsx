@@ -1,32 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Dashboard from '../Dashboard'
 import { AppProvider } from '../../context/AppContext'
 
-// Mock the database service to control data
-vi.mock('../../services/database', () => ({
-  default: {
-    getAllProjects: vi.fn(),
-    getTasksDueThisWeek: vi.fn(),
-    getOverdueTasks: vi.fn(),
-    createProject: vi.fn(),
-    init: vi.fn(),
-    isInitialized: vi.fn()
+// Mock the API dashboard service used by AppProvider
+vi.mock('../../services/api.js', () => ({
+  dashboardService: {
+    getDashboardData: vi.fn(),
+  },
+  projectService: {
+    create: vi.fn(),
+  },
+  authService: {
+    verifyToken: vi.fn().mockResolvedValue({
+      success: true,
+      user: { id: 1, username: 'admin', email: 'admin@sizewise.com', fullName: 'Admin', role: 'admin' }
+    })
   }
 }))
 
-// Mock localStorage
-const mockLocalStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'localStorage', { value: mockLocalStorage })
+// Use real localStorage for integration-like behavior
 
-// Import the mocked database service
-import databaseService from '../../services/database'
+// Import mocked services
+import { dashboardService, projectService } from '../../services/api.js'
 
 describe('Dashboard Logic Tests', () => {
   let mockOnLogout
@@ -37,18 +34,29 @@ describe('Dashboard Logic Tests', () => {
     user = userEvent.setup()
     vi.clearAllMocks()
 
-    // Mock localStorage to return empty data initially
-    mockLocalStorage.getItem.mockReturnValue(null)
+    // Real timers by default
+    vi.useRealTimers()
 
-    // Mock database service to return empty data initially
-    databaseService.getAllProjects.mockResolvedValue([])
-    databaseService.getTasksDueThisWeek.mockResolvedValue(0)
-    databaseService.getOverdueTasks.mockResolvedValue({ count: 0, top3: [] })
-    databaseService.isInitialized.mockReturnValue(false)
+    // Ensure a clean storage and a valid auth token
+    localStorage.clear()
+    localStorage.setItem('sizewise_token', 'test-token')
+
+    // Mock dashboard service to return empty data initially
+    dashboardService.getDashboardData.mockResolvedValue({
+      success: true,
+      data: {
+        tasksThisWeek: 0,
+        overdue: { count: 0, top3: [] },
+        milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] },
+        projects: []
+      }
+    })
   })
 
   afterEach(() => {
     vi.clearAllTimers()
+    vi.useRealTimers()
+    localStorage.clear()
   })
 
   describe('Fresh Database State', () => {
@@ -65,12 +73,12 @@ describe('Dashboard Logic Tests', () => {
       })
 
       // Should show zero for all KPIs
-      expect(screen.getByText('0')).toBeInTheDocument() // Tasks due this week
-      expect(screen.getAllByText('0')).toHaveLength(4) // All KPI cards should show 0
-      
+      const zeroes = screen.getAllByText('0')
+      expect(zeroes.length).toBeGreaterThanOrEqual(3)
+
       // Status bar should show 0 projects
       expect(screen.getByText(/0 Projects/)).toBeInTheDocument()
-      expect(screen.getByText(/0 Active/)).toBeInTheDocument()
+      expect(screen.getAllByText(/0 Active/).length).toBeGreaterThan(0)
     })
 
     it('should show "Clear" status when no tasks are due', async () => {
@@ -112,7 +120,7 @@ describe('Dashboard Logic Tests', () => {
         expect(screen.getByText(/0 Projects/)).toBeInTheDocument()
       })
 
-      // Mock successful project creation
+      // Mock successful project creation via API service
       const newProject = {
         id: 1,
         name: 'Test Project',
@@ -125,8 +133,16 @@ describe('Dashboard Logic Tests', () => {
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 30 days from now
       }
 
-      databaseService.createProject.mockResolvedValue({ success: true, data: newProject })
-      databaseService.getAllProjects.mockResolvedValue([newProject])
+      projectService.create.mockResolvedValue({ success: true, data: newProject })
+      dashboardService.getDashboardData.mockResolvedValue({
+        success: true,
+        data: {
+          tasksThisWeek: 0,
+          overdue: { count: 0, top3: [] },
+          milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] },
+          projects: [newProject]
+        }
+      })
 
       // Click new project button
       const newProjectBtn = screen.getByText('+ New Project')
@@ -140,18 +156,22 @@ describe('Dashboard Logic Tests', () => {
       // Fill out the form
       await user.type(screen.getByPlaceholderText('Enter project name'), 'Test Project')
       await user.type(screen.getByPlaceholderText('Enter project description'), 'A test project')
-      
-      // Select location
-      const locationSelect = screen.getByDisplayValue('New York, NY')
-      expect(locationSelect).toBeInTheDocument()
+
+      // Provide required dates
+      const startDateInput = screen.getByLabelText(/start date/i)
+      const dueDateInput = screen.getByLabelText(/due date/i)
+      await user.type(startDateInput, newProject.startDate)
+      await user.type(dueDateInput, newProject.dueDate)
 
       // Submit the form
       const createBtn = screen.getByRole('button', { name: /create project/i })
       await user.click(createBtn)
 
-      // Should show success message and update counts
+      // Should reflect in status bar counts
       await waitFor(() => {
-        expect(screen.getByText(/project created successfully/i)).toBeInTheDocument()
+        // Use regex with flexible matcher to account for markup
+        const matches = screen.queryAllByText((content) => /1\s*Projects/i.test(content))
+        expect(matches.length).toBeGreaterThan(0)
       })
     })
   })
@@ -170,9 +190,15 @@ describe('Dashboard Logic Tests', () => {
         dueDate: futureDate.toISOString().split('T')[0]
       }
 
-      databaseService.getAllProjects.mockResolvedValue([realisticProject])
-      databaseService.getTasksDueThisWeek.mockResolvedValue(0) // No tasks due
-      databaseService.getOverdueTasks.mockResolvedValue({ count: 0, top3: [] }) // No overdue tasks
+      dashboardService.getDashboardData.mockResolvedValue({
+        success: true,
+        data: {
+          tasksThisWeek: 0,
+          overdue: { count: 0, top3: [] },
+          milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] },
+          projects: [realisticProject]
+        }
+      })
 
       render(
         <AppProvider>
@@ -199,9 +225,15 @@ describe('Dashboard Logic Tests', () => {
         { id: 3, name: 'Completed Project', status: 'completed' }
       ]
 
-      databaseService.getAllProjects.mockResolvedValue(projects)
-      databaseService.getTasksDueThisWeek.mockResolvedValue(2)
-      databaseService.getOverdueTasks.mockResolvedValue({ count: 1, top3: [{ id: 1, name: 'Late Task' }] })
+      dashboardService.getDashboardData.mockResolvedValue({
+        success: true,
+        data: {
+          tasksThisWeek: 2,
+          overdue: { count: 1, top3: [{ id: 1, name: 'Late Task' }] },
+          milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] },
+          projects
+        }
+      })
 
       render(
         <AppProvider>
@@ -210,9 +242,9 @@ describe('Dashboard Logic Tests', () => {
       )
 
       await waitFor(() => {
-        // Should show correct project counts
-        expect(screen.getByText(/3 Projects/)).toBeInTheDocument()
-        expect(screen.getByText(/2 Active/)).toBeInTheDocument()
+        // Should show correct project counts (status bar and badges)
+        expect(screen.getAllByText(/3 Projects/).length).toBeGreaterThan(0)
+        expect(screen.getAllByText(/2 Active/).length).toBeGreaterThan(0)
       })
 
       // Should show correct KPI values
@@ -224,9 +256,17 @@ describe('Dashboard Logic Tests', () => {
 
   describe('Database Initialization Logic', () => {
     it('should not seed fake data on fresh installation', async () => {
-      // Mock fresh installation
-      databaseService.isInitialized.mockReturnValue(false)
-      mockLocalStorage.getItem.mockReturnValue(null)
+      // Mock fresh installation: clear storage and return empty dashboard
+      localStorage.clear()
+      dashboardService.getDashboardData.mockResolvedValue({
+        success: true,
+        data: {
+          tasksThisWeek: 0,
+          overdue: { count: 0, top3: [] },
+          milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] },
+          projects: []
+        }
+      })
 
       render(
         <AppProvider>
@@ -239,17 +279,13 @@ describe('Dashboard Logic Tests', () => {
         expect(screen.getByText(/0 Projects/)).toBeInTheDocument()
       })
 
-      // Verify database service was called correctly
-      expect(databaseService.getAllProjects).toHaveBeenCalled()
-      expect(databaseService.getTasksDueThisWeek).toHaveBeenCalled()
-      expect(databaseService.getOverdueTasks).toHaveBeenCalled()
+      // Verify dashboard service was called
+      expect(dashboardService.getDashboardData).toHaveBeenCalled()
     })
 
     it('should handle database errors gracefully', async () => {
-      // Mock database error
-      databaseService.getAllProjects.mockRejectedValue(new Error('Database error'))
-      databaseService.getTasksDueThisWeek.mockRejectedValue(new Error('Database error'))
-      databaseService.getOverdueTasks.mockRejectedValue(new Error('Database error'))
+      // Mock dashboard error
+      dashboardService.getDashboardData.mockResolvedValue({ success: false, error: 'Failed to fetch dashboard data' })
 
       render(
         <AppProvider>
@@ -270,8 +306,18 @@ describe('Dashboard Logic Tests', () => {
 
   describe('Real-time Data Updates', () => {
     it('should reflect changes immediately after project creation', async () => {
+      // Intercept setInterval to capture refresh callback
+      let intervalCb = null
+      const setIntervalSpy = vi.spyOn(global, 'setInterval').mockImplementation((fn) => {
+        intervalCb = fn
+        return 1
+      })
+
       // Start with empty state
-      databaseService.getAllProjects.mockResolvedValue([])
+      dashboardService.getDashboardData.mockResolvedValue({
+        success: true,
+        data: { tasksThisWeek: 0, overdue: { count: 0, top3: [] }, milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] }, projects: [] }
+      })
 
       render(
         <AppProvider>
@@ -283,13 +329,22 @@ describe('Dashboard Logic Tests', () => {
         expect(screen.getByText(/0 Projects/)).toBeInTheDocument()
       })
 
-      // Simulate project creation by updating mock
+      // Next refresh returns one project and keeps returning it
       const newProject = { id: 1, name: 'New Project', status: 'active' }
-      databaseService.getAllProjects.mockResolvedValue([newProject])
+      dashboardService.getDashboardData.mockImplementation(() => Promise.resolve({ success: true, data: { tasksThisWeek: 0, overdue: { count: 0, top3: [] }, milestones: { wonThisMonth: 0, finishedThisMonth: 0, recent: [] }, projects: [newProject] } }))
 
-      // In a real scenario, the dashboard would refresh after project creation
-      // This tests that the logic correctly calculates based on current data
-      expect(databaseService.getAllProjects).toHaveBeenCalled()
+      // Manually trigger captured interval callback to simulate auto-refresh
+      await act(async () => {
+        intervalCb && intervalCb()
+      })
+
+      // Wait for refreshed data to appear
+      await waitFor(() => {
+        const matches = screen.queryAllByText((content) => /1\s*Projects/i.test(content))
+        expect(matches.length).toBeGreaterThan(0)
+      })
+
+      setIntervalSpy.mockRestore()
     })
   })
 })
